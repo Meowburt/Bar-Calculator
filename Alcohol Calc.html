@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bar Stock Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'site-navy': '#2a2d5a',
+                        'site-navy-hover': '#1d1f40',
+                        'site-pink': '#fcbcd4',
+                        'site-pink-border': '#e5a5bd',
+                        'error-red': '#dc2626'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-transparent flex justify-center py-8">
+
+    <!-- Calculator Main Container (Pink Background) -->
+    <div class="bg-site-pink rounded-2xl shadow-xl border border-site-pink-border p-6 md:p-8 w-full max-w-lg">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-site-navy">Bar Stock Calculator</h2>
+            <p class="text-sm text-site-navy opacity-80 mt-2">Find out exactly how much alcohol and mixers to buy for your event.</p>
+        </div>
+
+        <form id="alcoholForm" class="space-y-6" onsubmit="event.preventDefault(); calculateAlcohol();">
+            
+            <!-- Basic Event Info -->
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="guests" class="block text-sm font-semibold text-site-navy mb-1">Guest Count</label>
+                        <input type="number" id="guests" min="1" class="w-full px-4 py-2 bg-white text-site-navy border border-white rounded-lg focus:ring-2 focus:ring-site-navy focus:border-site-navy outline-none transition shadow-sm" placeholder="e.g. 100" required>
+                    </div>
+                    <div>
+                        <label for="hours" class="block text-sm font-semibold text-site-navy mb-1">Hours</label>
+                        <input type="number" id="hours" min="1" step="0.5" class="w-full px-4 py-2 bg-white text-site-navy border border-white rounded-lg focus:ring-2 focus:ring-site-navy focus:border-site-navy outline-none transition shadow-sm" placeholder="e.g. 5" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="drinkerType" class="block text-sm font-semibold text-site-navy mb-1">Guest Drinking Habits</label>
+                    <select id="drinkerType" class="w-full px-4 py-2 bg-white text-site-navy border border-white rounded-lg focus:ring-2 focus:ring-site-navy focus:border-site-navy outline-none transition shadow-sm">
+                        <option value="average">Average (1 drink/hr)</option>
+                        <option value="light">Light (0.75 drinks/hr)</option>
+                        <option value="heavy">Heavy (1.5 drinks/hr)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Custom Drink Distribution -->
+            <div class="border-t border-site-navy/20 pt-5 mt-5">
+                <label class="block text-sm font-bold text-site-navy mb-3">Overall Distribution (%)</label>
+                <div class="flex space-x-3">
+                    <div class="w-1/3">
+                        <label class="block text-xs font-medium text-site-navy mb-1">Beer</label>
+                        <input type="number" id="beerPct" value="25" min="0" max="100" class="w-full px-3 py-2 bg-white text-site-navy border border-white rounded-lg focus:ring-2 focus:ring-site-navy outline-none transition shadow-sm">
+                    </div>
+                    <div class="w-1/3">
+                        <label class="block text-xs font-medium text-site-navy mb-1">Liquor</label>
+                        <input type="number" id="liqPct" value="50" min="0" max="100" class="w-full px-3 py-2 bg-white text-site-navy border border-white rounded-lg focus:ring-2 focus:ring-site-navy outline-none transition shadow-sm">
+                    </div>
+                    <div class="w-1/3">
+                        <label class="block text-xs font-medium text-site-navy mb-1">Wine</label>
+                        <input type="number" id="winePct" value="25" min="0" max="100" class="w-full px-3 py-2 bg-white text-site-navy border border-white rounded-lg focus:ring-2 focus:ring-site-navy outline-none transition shadow-sm">
+                    </div>
+                </div>
+                <p id="distError" class="text-sm font-bold text-error-red text-center hidden mt-3">Warning: Overall Distribution percentages must add up to exactly 100%.</p>
+            </div>
+
+            <!-- Custom Wine Breakdown -->
+            <div class="border-t border-site-navy/20 pt-5">
+                <label class="block text-sm font-bold text-site-navy mb-3">Wine Breakdown (%)</label>
+                <div class="flex space-x-3">
+                    <div class="w-1/3">
+                        <label class="block text-xs font-medium text-site-navy mb-1">Red</label>
+                        <input type="number" id="redPct" value="50" min="0" max="100" class="w-full px-3 py-2 bg-white text-site-navy border border-white rounded-lg focus:ring-2 focus:ring-site-navy outline-none transition shadow-sm">
+                    </div>
+                    <div class="w-1/3">
+                        <label class="block text-xs font-medium text-site-navy mb-1">White</label>
+                        <input type="number" id="whitePct" value="40" min="0" max="100" class="w-full px-3 py-2 bg-white text-site-navy border border-white rounded-lg focus:ring-2 focus:ring-site-navy outline-none transition shadow-sm">
+                    </div>
+                    <div class="w-1/3">
+                        <label class="block text-xs font-medium text-site-navy mb-1">Rosé/Spark.</label>
+                        <input type="number" id="rosePct" value="10" min="0" max="100" class="w-full px-3 py-2 bg-white text-site-navy border border-white rounded-lg focus:ring-2 focus:ring-site-navy outline-none transition shadow-sm">
+                    </div>
+                </div>
+                <p id="wineError" class="text-sm font-bold text-error-red text-center hidden mt-3">Warning: Wine Breakdown percentages must add up to exactly 100%.</p>
+            </div>
+
+            <!-- Champagne Toast -->
+            <div class="flex items-center pt-2">
+                <input type="checkbox" id="toast" class="w-4 h-4 text-site-navy bg-white border-white rounded focus:ring-site-navy transition shadow-sm">
+                <label for="toast" class="ml-2 block text-sm font-medium text-site-navy">Include a separate Champagne Toast?</label>
+            </div>
+
+            <button type="submit" class="w-full bg-site-navy hover:bg-site-navy-hover text-white font-semibold py-3 rounded-lg transition duration-200 mt-6 shadow-md">
+                Calculate My List
+            </button>
+        </form>
+
+        <!-- Results Section (Hidden by default) -->
+        <div id="results" class="mt-8 hidden bg-white/70 backdrop-blur-sm p-6 rounded-xl border border-white/50 transition-all shadow-sm">
+            <h3 class="text-lg font-bold text-site-navy mb-4 border-b border-site-navy/20 pb-2">Your Shopping List</h3>
+            
+            <div class="space-y-4 text-sm text-site-navy">
+                <div class="flex justify-between items-center">
+                    <span class="font-bold text-site-navy">Total Estimated Drinks:</span>
+                    <span id="resTotal" class="font-bold text-site-navy bg-white px-3 py-1 rounded-full border border-white shadow-sm"></span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 pt-2">
+                    <div class="bg-white p-3 rounded-lg shadow-sm border border-white">
+                        <span id="lblBeer" class="block text-xs text-site-navy/60 uppercase font-bold">Beer (25%)</span>
+                        <span id="resBeer" class="block text-lg font-black text-site-navy mt-1"></span>
+                        <span class="text-[10px] text-site-navy/60 font-medium">bottles / cans</span>
+                    </div>
+                    
+                    <div class="bg-white p-3 rounded-lg shadow-sm border border-white">
+                        <span id="lblLiquor" class="block text-xs text-site-navy/60 uppercase font-bold">Liquor (50%)</span>
+                        <span id="resLiquor" class="block text-lg font-black text-site-navy mt-1"></span>
+                        <span class="text-[10px] text-site-navy/60 font-medium">bottles (19 servings)</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-white mt-2">
+                    <span id="lblWine" class="block text-xs text-site-navy/60 uppercase font-bold mb-3">Wine (25%)</span>
+                    <div class="flex justify-between text-sm mb-2 pb-2 border-b border-site-navy/10">
+                        <span class="font-medium text-site-navy"><span id="lblRed">Red</span>:</span> 
+                        <span id="resRed" class="font-bold text-site-navy"></span>
+                    </div>
+                    <div class="flex justify-between text-sm mb-2 pb-2 border-b border-site-navy/10">
+                        <span class="font-medium text-site-navy"><span id="lblWhite">White</span>:</span> 
+                        <span id="resWhite" class="font-bold text-site-navy"></span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="font-medium text-site-navy"><span id="lblRose">Rosé/Sparkling</span>:</span> 
+                        <span id="resRose" class="font-bold text-site-navy"></span>
+                    </div>
+                    <p class="text-[10px] text-site-navy/50 mt-3 text-right font-medium">*Calculated as 750ml bottles (approx 5 glasses/btl)</p>
+                </div>
+
+                <!-- Mixers Section -->
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-white mt-2">
+                    <span class="block text-xs text-site-navy/60 uppercase font-bold mb-3">Mixers & Water</span>
+                    <p class="text-[11px] text-site-navy/60 mb-3 leading-tight border-b border-site-navy/10 pb-2 font-medium">Based on liquor servings. Rounded up per bottle sizing.</p>
+                    
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="font-medium text-site-navy">Cola <span class="text-[9px] text-site-navy/50">(2L)</span></span> 
+                            <span id="resCola" class="font-bold text-site-navy"></span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="font-medium text-site-navy">Diet Cola <span class="text-[9px] text-site-navy/50">(2L)</span></span> 
+                            <span id="resDiet" class="font-bold text-site-navy"></span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="font-medium text-site-navy">Tonic <span class="text-[9px] text-site-navy/50">(2L)</span></span> 
+                            <span id="resTonic" class="font-bold text-site-navy"></span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="font-medium text-site-navy">Soda Wtr <span class="text-[9px] text-site-navy/50">(2L)</span></span> 
+                            <span id="resSoda" class="font-bold text-site-navy"></span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="font-medium text-site-navy">Ginger Ale <span class="text-[9px] text-site-navy/50">(2L)</span></span> 
+                            <span id="resGinger" class="font-bold text-site-navy"></span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="font-medium text-site-navy">Juices <span class="text-[9px] text-site-navy/50">(1L)</span></span> 
+                            <span id="resJuice" class="font-bold text-site-navy"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between text-sm mt-3 pt-3 border-t border-site-navy/10">
+                        <span class="text-site-navy font-bold">Bottled Water <span class="text-[9px] text-site-navy/50 font-medium">(1 serving/btl)</span></span> 
+                        <span id="resWater" class="font-black text-site-navy"></span>
+                    </div>
+                </div>
+
+                <!-- Champagne Toast Box -->
+                <div id="champagneBox" class="bg-white p-3 rounded-lg shadow-sm border border-white flex justify-between items-center hidden">
+                    <div>
+                        <span class="block text-xs text-site-navy/60 uppercase font-bold">Champagne Toast</span>
+                        <span class="text-[10px] text-site-navy/50 font-medium">750ml bottles</span>
+                    </div>
+                    <span id="resChampagne" class="text-lg font-black text-site-navy"></span>
+                </div>
+                <div class="text-center pt-4 pb-2">
+                    <span class="text-lg font-bold text-site-navy">🥂 Cheers!</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculateAlcohol() {
+            // Clear previous results on submit
+            document.getElementById('results').classList.add('hidden');
+
+            // Inputs
+            const guests = parseInt(document.getElementById('guests').value) || 0;
+            const hours = parseFloat(document.getElementById('hours').value) || 0;
+            const drinkerType = document.getElementById('drinkerType').value;
+            const hasToast = document.getElementById('toast').checked;
+
+            // Distribution Percentages
+            const beerPct = parseInt(document.getElementById('beerPct').value) || 0;
+            const liqPct = parseInt(document.getElementById('liqPct').value) || 0;
+            const winePct = parseInt(document.getElementById('winePct').value) || 0;
+
+            // Wine Breakdown Percentages
+            const redPct = parseInt(document.getElementById('redPct').value) || 0;
+            const whitePct = parseInt(document.getElementById('whitePct').value) || 0;
+            const rosePct = parseInt(document.getElementById('rosePct').value) || 0;
+
+            let hasError = false;
+
+            // Validation: Do they equal exactly 100%?
+            // Warning is only shown when they don't add up to 100%.
+            if ((beerPct + liqPct + winePct) !== 100) {
+                document.getElementById('distError').classList.remove('hidden');
+                hasError = true;
+            } else {
+                document.getElementById('distError').classList.add('hidden');
+            }
+
+            if ((redPct + whitePct + rosePct) !== 100) {
+                document.getElementById('wineError').classList.remove('hidden');
+                hasError = true;
+            } else {
+                document.getElementById('wineError').classList.add('hidden');
+            }
+
+            if (hasError) {
+                // If there is an error, results section remains hidden.
+                return;
+            }
+
+            // --- Continuation of Calculation Logic if percentages are valid ---
+
+            // Base drinks per hour multiplier
+            let multiplier = 1; 
+            if (drinkerType === 'light') multiplier = 0.75;
+            if (drinkerType === 'heavy') multiplier = 1.5;
+
+            // Total general drinks
+            const totalDrinks = Math.ceil(guests * hours * multiplier);
+
+            // Calculate exact drink splits
+            const beerDrinks = totalDrinks * (beerPct / 100);
+            const liquorDrinks = totalDrinks * (liqPct / 100);
+            const wineDrinks = totalDrinks * (winePct / 100);
+
+            // Quantities
+            const beerBottles = Math.ceil(beerDrinks);
+            
+            // Wine: 5 glasses per 750ml bottle
+            const wineBottlesTotal = Math.ceil(wineDrinks / 5);
+            
+            // Sub-divide wine bottles
+            const redWine = Math.ceil(wineBottlesTotal * (redPct / 100));
+            const whiteWine = Math.ceil(wineBottlesTotal * (whitePct / 100));
+            let roseWine = wineBottlesTotal - redWine - whiteWine;
+            if (roseWine < 0) roseWine = 0; 
+            
+            // Liquor: 19 mixed drinks per bottle
+            const liquorBottles = Math.ceil(liquorDrinks / 19);
+
+            // --- Mixers Logic ---
+            const colaServings = liquorDrinks * 0.15;
+            const dietServings = liquorDrinks * 0.15;
+            const tonicServings = liquorDrinks * 0.20;
+            const sodaServings = liquorDrinks * 0.20;
+            const gingerServings = liquorDrinks * 0.10;
+            const juiceServings = liquorDrinks * 0.20;
+
+            // Divide by specific servings per container
+            const colaBottles = Math.ceil(colaServings / 12);
+            const dietBottles = Math.ceil(dietServings / 12);
+            const tonicBottles = Math.ceil(tonicServings / 12);
+            const sodaBottles = Math.ceil(sodaServings / 12);
+            const gingerBottles = Math.ceil(gingerServings / 12);
+            const juiceBottles = Math.ceil(juiceServings / 6);
+            
+            // Water: standard 1 bottle per guest
+            const waterBottles = guests; 
+
+            // Populate Main Results
+            document.getElementById('resTotal').innerText = totalDrinks;
+            document.getElementById('resBeer').innerText = beerBottles;
+            document.getElementById('resLiquor').innerText = liquorBottles;
+            document.getElementById('resRed').innerText = redWine + " btls";
+            document.getElementById('resWhite').innerText = whiteWine + " btls";
+            document.getElementById('resRose').innerText = roseWine + " btls";
+
+            // Populate Mixers
+            document.getElementById('resCola').innerText = colaBottles;
+            document.getElementById('resDiet').innerText = dietBottles;
+            document.getElementById('resTonic').innerText = tonicBottles;
+            document.getElementById('resSoda').innerText = sodaBottles;
+            document.getElementById('resGinger').innerText = gingerBottles;
+            document.getElementById('resJuice').innerText = juiceBottles;
+            document.getElementById('resWater').innerText = waterBottles;
+
+            // Update Labels
+            document.getElementById('lblBeer').innerText = `Beer (${beerPct}%)`;
+            document.getElementById('lblLiquor').innerText = `Liquor (${liqPct}%)`;
+            document.getElementById('lblWine').innerText = `Wine (${winePct}%)`;
+            
+            document.getElementById('lblRed').innerText = `Red (${redPct}%)`;
+            document.getElementById('lblWhite').innerText = `White (${whitePct}%)`;
+            document.getElementById('lblRose').innerText = `Rosé/Sparkling (${rosePct}%)`;
+
+            // Champagne Logic
+            const champBox = document.getElementById('champagneBox');
+            if (hasToast) {
+                const champagneBottles = Math.ceil(guests / 6);
+                document.getElementById('resChampagne').innerText = champagneBottles;
+                champBox.classList.remove('hidden');
+            } else {
+                champBox.classList.add('hidden');
+            }
+
+            // Show results section
+            document.getElementById('results').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
